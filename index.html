@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JUNE — Streetwear Auction House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E3DCC6;
+    --paper2:#D8CFB3;
+    --ink:#161310;
+    --rust:#B33A20;
+    --acid:#CFFF3D;
+    --denim:#37485C;
+    --grime:#8b8474;
+    --tape:#e8e2c9;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Space Mono', monospace;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  .grain{
+    pointer-events:none;
+    position:fixed; inset:0; z-index:900;
+    opacity:.18; mix-blend-mode:multiply;
+    transition:opacity .2s ease;
+  }
+  .scratches{
+    pointer-events:none;
+    position:fixed; inset:0; z-index:899;
+    opacity:.10; mix-blend-mode:overlay;
+    transition:opacity .2s ease;
+    background:
+      repeating-linear-gradient(115deg, transparent 0 40px, rgba(255,255,255,.7) 40px 41px, transparent 41px 90px),
+      repeating-linear-gradient(65deg, transparent 0 70px, rgba(0,0,0,.6) 70px 71px, transparent 71px 160px);
+  }
+  .grain.off, .scratches.off{opacity:0;}
+
+  a{color:inherit;}
+
+  header{
+    position:sticky; top:0; z-index:200;
+    background:var(--ink); color:var(--paper);
+    border-bottom:4px solid var(--rust);
+    padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; flex-wrap:wrap;
+  }
+  .logo{
+    font-family:'Anton', sans-serif;
+    font-size:28px; letter-spacing:1px;
+    transform:rotate(-2deg);
+    display:inline-block;
+  }
+  .logo .accent{color:var(--acid);}
+  nav.tabs{ display:flex; gap:10px; flex-wrap:wrap; }
+  .tape-btn{
+    font-family:'Space Mono', monospace;
+    font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    background:var(--tape); color:var(--ink);
+    border:none; padding:8px 14px; cursor:pointer;
+    transform:rotate(-1deg);
+    box-shadow:2px 2px 0 rgba(0,0,0,.5);
+    position:relative;
+  }
+  .tape-btn::before{
+    content:""; position:absolute; top:-6px; left:10px;
+    width:26px; height:12px; background:rgba(255,255,255,.55); transform:rotate(-4deg);
+  }
+  .tape-btn.active{background:var(--acid);}
+  .tape-btn:hover{transform:rotate(1deg) translateY(-1px);}
+
+  .header-actions{display:flex; gap:10px; align-items:center;}
+  .icon-btn{
+    font-family:'Space Mono'; font-size:11px; font-weight:700; letter-spacing:1px;
+    background:transparent; color:var(--paper);
+    border:2px solid var(--paper); padding:7px 12px; cursor:pointer;
+    text-transform:uppercase;
+  }
+  .icon-btn:hover{background:var(--paper); color:var(--ink);}
+  .icon-btn.on{background:var(--acid); color:var(--ink); border-color:var(--acid);}
+
+  .live-pill{
+    font-family:'Space Mono'; font-size:11px; font-weight:700;
+    background:var(--rust); color:#fff; padding:6px 10px; letter-spacing:1px;
+    display:flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--acid);animation:pulse 1.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+  .ticker-wrap{
+    background:var(--acid); border-bottom:3px solid var(--ink);
+    overflow:hidden; white-space:nowrap; padding:6px 0;
+    max-height:34px; transition:max-height .25s ease, padding .25s ease;
+  }
+  .ticker-wrap.off{max-height:0; padding:0; border-bottom:0;}
+  .ticker{
+    display:inline-block; font-family:'Permanent Marker', cursive; font-size:14px; color:var(--ink);
+    animation:scroll-left 22s linear infinite; padding-left:100%;
+  }
+  @keyframes scroll-left{ from{transform:translateX(0);} to{transform:translateX(-100%);} }
+
+  .hero{
+    position:relative; padding:70px 24px 100px; text-align:center;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(179,58,32,.12), transparent 55%),
+      radial-gradient(ellipse at 80% 70%, rgba(55,72,92,.15), transparent 55%),
+      var(--paper2);
+    border-bottom:3px dashed var(--ink);
+  }
+  .stamp-title{
+    font-family:'Anton', sans-serif;
+    font-size:clamp(48px, 11vw, 130px); line-height:.9; letter-spacing:-1px;
+    transform:rotate(-3deg); color:var(--ink);
+    text-shadow: 3px 3px 0 var(--rust), 6px 6px 0 rgba(0,0,0,.15);
+    margin:0; -webkit-text-stroke:1px var(--ink);
+  }
+  .hero-sub{
+    font-family:'Permanent Marker', cursive; color:var(--rust);
+    font-size:clamp(16px,2.6vw,26px); transform:rotate(1deg); margin-top:10px;
+  }
+  .hero-tags{ margin-top:26px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .hero-tags span{
+    font-size:11px; letter-spacing:1.5px; font-weight:700; border:2px solid var(--ink);
+    padding:6px 12px; background:var(--paper); transform:rotate(-2deg);
+  }
+  .hero-tags span:nth-child(2n){transform:rotate(2deg); background:var(--acid);}
+  .hero-tags span:nth-child(3n){transform:rotate(-1deg); background:var(--denim); color:var(--paper);}
+
+  .torn-edge{
+    position:absolute; left:0; right:0; bottom:-1px; height:34px; background:var(--paper);
+    clip-path: polygon(0% 0%, 3% 100%, 6% 10%, 9% 90%, 12% 0%, 15% 100%, 18% 10%, 21% 90%, 24% 0%, 27% 100%, 30% 10%, 33% 90%, 36% 0%, 39% 100%, 42% 10%, 45% 90%, 48% 0%, 51% 100%, 54% 10%, 57% 90%, 60% 0%, 63% 100%, 66% 10%, 69% 90%, 72% 0%, 75% 100%, 78% 10%, 81% 90%, 84% 0%, 87% 100%, 90% 10%, 93% 90%, 96% 0%, 100% 100%, 100% 100%, 0% 100%);
+  }
+
+  .section-head{ display:flex; align-items:center; gap:14px; padding:40px 24px 10px; max-width:1200px; margin:0 auto; }
+  .section-head h2{ font-family:'Anton', sans-serif; font-size:clamp(26px,4vw,42px); margin:0; transform:rotate(-1deg); }
+  .section-head .rule{flex:1; height:3px; background:repeating-linear-gradient(90deg, var(--ink) 0 10px, transparent 10px 16px);}
+
+  .grid{
+    max-width:1200px; margin:0 auto; padding:20px 24px 60px;
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:34px;
+  }
+
+  .card{
+    background:var(--tape); border:2px solid var(--ink); padding:14px 14px 16px;
+    position:relative; transition:transform .2s ease; box-shadow:5px 5px 0 rgba(0,0,0,.5);
+  }
+  .card:nth-child(2n){transform:rotate(1.4deg);}
+  .card:nth-child(3n){transform:rotate(-1.2deg);}
+  .card:nth-child(5n){transform:rotate(.6deg);}
+  .card:hover{transform:rotate(0deg) translateY(-4px) scale(1.015); z-index:5;}
+  body.edit-mode .card{transform:none !important;}
+  body.edit-mode .card:hover{transform:none !important;}
+
+  .card::before{
+    content:""; position:absolute; top:-10px; left:50%; transform:translateX(-50%) rotate(-3deg);
+    width:70px; height:22px; background:rgba(255,255,255,.5); border:1px solid rgba(0,0,0,.15);
+  }
+
+  .card .badge{
+    position:absolute; top:10px; right:10px; font-family:'Permanent Marker', cursive;
+    background:var(--rust); color:#fff; padding:5px 10px; font-size:12px;
+    transform:rotate(6deg); z-index:2; border:2px solid var(--ink);
+  }
+  .card .badge.hot{background:var(--acid); color:var(--ink);}
+
+  .img-wrap{position:relative;}
+  .card img{
+    width:100%; aspect-ratio:1/1; object-fit:cover;
+    filter: grayscale(.35) sepia(.25) contrast(1.15) saturate(1.3);
+    border:2px solid var(--ink); display:block;
+  }
+  .photo-edit-btn{
+    display:none;
+    position:absolute; bottom:8px; right:8px;
+    font-family:'Space Mono'; font-size:10px; font-weight:700; letter-spacing:.5px;
+    background:var(--ink); color:var(--acid); border:none; padding:6px 8px; cursor:pointer;
+  }
+  body.edit-mode .photo-edit-btn{display:block;}
+
+  .card h3{ font-family:'Anton', sans-serif; font-size:20px; margin:12px 0 2px; letter-spacing:.5px; }
+  .card .meta{ font-size:11px; color:var(--grime); text-transform:uppercase; letter-spacing:1px; }
+
+  .edit-field{
+    display:none; width:100%; font-family:'Space Mono'; font-size:13px; font-weight:700;
+    border:2px solid var(--denim); background:#fff; padding:6px; margin-top:6px;
+  }
+  body.edit-mode .edit-field{display:block;}
+  body.edit-mode .card h3, body.edit-mode .card .amount{display:none;}
+
+  .bid-row{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    margin-top:10px; border-top:2px dashed var(--ink); padding-top:8px;
+  }
+  .bid-row .label{font-size:10px; letter-spacing:1px; color:var(--grime);}
+  .bid-row .amount{font-family:'Anton', sans-serif; font-size:24px; color:var(--rust);}
+  .timer{
+    font-size:11px; font-weight:700; background:var(--ink); color:var(--acid);
+    padding:3px 8px; letter-spacing:1px; display:inline-block;
+  }
+
+  .bid-btn{
+    margin-top:12px; width:100%; font-family:'Anton', sans-serif; letter-spacing:1px; font-size:16px;
+    background:var(--ink); color:var(--paper); border:none; padding:12px 0; cursor:pointer;
+    position:relative; transition:transform .1s ease;
+  }
+  .bid-btn:hover{background:var(--rust); color:#fff;}
+  .bid-btn:active{transform:scale(.96);}
+  body.edit-mode .bid-btn{display:none;}
+  .bid-count{font-size:10px; color:var(--grime); margin-top:6px; text-align:right;}
+
+  .delete-lot{
+    display:none; margin-top:10px; width:100%;
+    font-family:'Space Mono'; font-size:11px; font-weight:700; letter-spacing:1px;
+    background:var(--rust); color:#fff; border:none; padding:8px 0; cursor:pointer;
+  }
+  body.edit-mode .delete-lot{display:block;}
+
+  .stamp-flash{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Permanent Marker', cursive; font-size:28px; color:var(--rust);
+    background:rgba(227,220,198,.92); border:4px solid var(--rust);
+    transform:rotate(-8deg) scale(0); opacity:0; pointer-events:none; z-index:10;
+  }
+  .stamp-flash.show{ animation:stampIn .7s ease forwards; }
+  @keyframes stampIn{
+    0%{transform:rotate(-8deg) scale(2.6); opacity:0;}
+    30%{transform:rotate(-8deg) scale(1); opacity:1;}
+    80%{transform:rotate(-8deg) scale(1); opacity:1;}
+    100%{transform:rotate(-8deg) scale(1); opacity:0;}
+  }
+
+  .add-lot-card{
+    border:3px dashed var(--ink); display:none; align-items:center; justify-content:center;
+    min-height:260px; cursor:pointer; background:transparent;
+    font-family:'Anton', sans-serif; font-size:20px; color:var(--grime);
+  }
+  body.edit-mode .add-lot-card{display:flex;}
+  .add-lot-card:hover{color:var(--rust); border-color:var(--rust);}
+
+  /* ---- settings drawer ---- */
+  .drawer{
+    position:fixed; top:0; right:-360px; width:340px; height:100%;
+    background:var(--paper2); border-left:4px solid var(--ink);
+    z-index:300; padding:24px; overflow-y:auto;
+    transition:right .28s ease;
+    box-shadow:-6px 0 20px rgba(0,0,0,.3);
+  }
+  .drawer.open{right:0;}
+  .drawer h3{font-family:'Anton', sans-serif; font-size:24px; margin:0 0 20px; transform:rotate(-1deg);}
+  .drawer label{display:block; font-size:11px; font-weight:700; letter-spacing:1px; margin:16px 0 6px; text-transform:uppercase;}
+  .drawer input[type=text]{
+    width:100%; padding:8px; font-family:'Space Mono'; font-weight:700; border:2px solid var(--ink);
+  }
+  .drawer .row{display:flex; align-items:center; justify-content:space-between; margin:14px 0; font-size:12px; font-weight:700;}
+  .switch{
+    width:44px; height:24px; background:var(--grime); border-radius:20px; position:relative; cursor:pointer; border:2px solid var(--ink);
+  }
+  .switch::after{
+    content:""; position:absolute; top:1px; left:1px; width:16px; height:16px; background:#fff; border-radius:50%;
+    transition:left .18s ease;
+  }
+  .switch.on{background:var(--acid);}
+  .switch.on::after{left:21px;}
+  .drawer button.action{
+    width:100%; margin-top:10px; font-family:'Anton', sans-serif; letter-spacing:1px; font-size:14px;
+    background:var(--ink); color:var(--paper); border:none; padding:12px 0; cursor:pointer;
+  }
+  .drawer button.action.danger{background:var(--rust); color:#fff;}
+  .drawer-close{
+    position:absolute; top:20px; right:20px; background:none; border:none; font-size:20px; cursor:pointer; color:var(--ink);
+  }
+  .scrim{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:250;
+  }
+  .scrim.show{display:block;}
+
+  footer{ background:var(--ink); color:var(--paper); padding:50px 24px 30px; position:relative; margin-top:20px; }
+  footer .torn-edge{top:-1px; bottom:auto; background:var(--ink); transform:rotate(180deg);}
+  .foot-grid{ max-width:1200px; margin:0 auto; display:flex; flex-wrap:wrap; gap:40px; justify-content:space-between; }
+  .foot-grid h4{font-family:'Anton',sans-serif; color:var(--acid); letter-spacing:1px;}
+  .foot-grid p, .foot-grid li{font-size:12px; color:var(--grime); line-height:1.7;}
+  .foot-grid ul{list-style:none; padding:0; margin:0;}
+  .receipt{
+    font-size:11px; color:var(--grime); text-align:center; margin-top:40px;
+    border-top:1px dashed var(--grime); padding-top:16px; letter-spacing:1px;
+  }
+
+  @media (max-width:640px){
+    nav.tabs{display:none;}
+    .card:nth-child(n){transform:none;}
+  }
+</style>
+</head>
+<body>
+
+<svg class="grain" xmlns="http://www.w3.org/2000/svg">
+  <filter id="noiseFilter">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#noiseFilter)"/>
+</svg>
+<div class="scratches"></div>
+
+<header>
+  <div class="logo" data-brand-logo><span class="accent">JUNE</span></div>
+  <nav class="tabs" id="tabs">
+    <button class="tape-btn active" data-filter="all">All Drops</button>
+    <button class="tape-btn" data-filter="hoodie">Hoodies</button>
+    <button class="tape-btn" data-filter="tee">Tees</button>
+    <button class="tape-btn" data-filter="bottoms">Cargos</button>
+    <button class="tape-btn" data-filter="kicks">Kicks</button>
+    <button class="tape-btn" data-filter="acc">Accessories</button>
+  </nav>
+  <div class="header-actions">
+    <div class="live-pill"><span class="live-dot"></span>LIVE AUCTION</div>
+    <button class="icon-btn" id="editModeBtn" style="display:none;">EDIT: OFF</button>
+    <button class="icon-btn" id="settingsBtn" style="display:none;">⚙ SETTINGS</button>
+    <button class="icon-btn" id="adminLockBtn">🔒 ADMIN</button>
+  </div>
+</header>
+
+<div class="ticker-wrap" id="tickerWrap">
+  <div class="ticker" id="tickerText">
+    🔥 new bid on RIPPED DENIM VEST — $86 &nbsp;&nbsp;|&nbsp;&nbsp; ⚡ ENDING SOON: acid-wash cargos &nbsp;&nbsp;|&nbsp;&nbsp; 💀 rare drop just listed: chain choker &nbsp;&nbsp;|&nbsp;&nbsp; 🔥 bidding war on oversized hoodie — 14 bids &nbsp;&nbsp;|&nbsp;&nbsp; ⚡ no cap, these kicks are going fast &nbsp;&nbsp;|&nbsp;&nbsp;
+  </div>
+</div>
+
+<section class="hero">
+  <h1 class="stamp-title" data-brand-title>JUNE</h1>
+  <div class="hero-sub">— the genz streetwear auction house —</div>
+  <div class="hero-tags">
+    <span>ONE OF ONE PIECES</span>
+    <span>NO CAP BIDS ONLY</span>
+    <span>THRIFTED &amp; REWORKED</span>
+    <span>DROPS WEEKLY</span>
+  </div>
+  <div class="torn-edge"></div>
+</section>
+
+<div class="section-head">
+  <h2>ACTIVE DROPS</h2>
+  <div class="rule"></div>
+</div>
+
+<div class="grid" id="grid"><!-- cards injected by JS --></div>
+
+<footer>
+  <div class="torn-edge"></div>
+  <div class="foot-grid">
+    <div>
+      <div class="logo" style="font-size:22px;" data-brand-logo><span class="accent">JUNE</span></div>
+      <p style="margin-top:10px; max-width:260px;">an auction house for pieces that already lived a life. bid, win, wear it different.</p>
+    </div>
+    <div>
+      <h4>SHOP</h4>
+      <ul><li>All Drops</li><li>Ending Soon</li><li>Sell Your Piece</li><li>How Bidding Works</li></ul>
+    </div>
+    <div>
+      <h4>SUPPORT</h4>
+      <ul><li>Shipping</li><li>Authenticity Check</li><li>Payment Methods</li><li>Contact Us</li></ul>
+    </div>
+    <div>
+      <h4>FOLLOW</h4>
+      <ul><li>Instagram</li><li>TikTok</li><li>Discord</li></ul>
+    </div>
+  </div>
+  <div class="receipt">
+    *** <span data-brand-domain>JUNE.COM</span> — RECEIPT #0007 *** ALL SALES FINAL ONCE HAMMER DROPS *** THANKS FOR RIDING WITH US ***
+  </div>
+</footer>
+
+<!-- settings drawer -->
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer">
+  <button class="drawer-close" id="drawerClose">✕</button>
+  <h3>SITE SETTINGS</h3>
+
+  <label>Site Name</label>
+  <input type="text" id="siteNameInput" value="JUNE" maxlength="20">
+
+  <div class="row"><span>Edit Mode</span><div class="switch" id="switchEdit"></div></div>
+  <div class="row"><span>Ticker Tape</span><div class="switch on" id="switchTicker"></div></div>
+  <div class="row"><span>Grain Texture</span><div class="switch on" id="switchGrain"></div></div>
+  <div class="row"><span>Scratch Overlay</span><div class="switch on" id="switchScratch"></div></div>
+
+  <label style="margin-top:24px;">Manage Listings</label>
+  <button class="action" id="addLotBtn">+ ADD NEW LOT</button>
+  <button class="action danger" id="resetBtn">RESET ALL DATA</button>
+
+  <label style="margin-top:24px;">Admin Access</label>
+  <button class="action danger" id="lockNowBtn">🔒 LOCK ADMIN NOW</button>
+  <p style="font-size:10px; color:var(--grime); margin-top:10px; line-height:1.6;">
+    Only someone who enters the admin password can open Edit Mode or this panel. Change the password in the site's code (look for ADMIN_PASSWORD).
+  </p>
+</div>
+
+<script>
+let brandName = "JUNE";
+let editMode = false;
+let currentFilter = 'all';
+let adminUnlocked = false;
+
+// change this to whatever you want your admin password to be
+const ADMIN_PASSWORD = "june-admin-2026";
+
+const defaultProducts = [
+  {name:"OVERSIZED GRAPHIC HOODIE", cat:"hoodie", img:"https://picsum.photos/id/1027/500/500", bid:64, bids:14, mins:42, badge:"HOT"},
+  {name:"RIPPED DENIM VEST", cat:"acc", img:"https://picsum.photos/id/1005/500/500", bid:86, bids:9, mins:12, badge:"ENDING SOON"},
+  {name:"ACID-WASH CARGO PANTS", cat:"bottoms", img:"https://picsum.photos/id/1011/500/500", bid:52, bids:7, mins:8, badge:"ENDING SOON"},
+  {name:"BOXY GRAPHIC TEE", cat:"tee", img:"https://picsum.photos/id/1025/500/500", bid:28, bids:5, mins:120, badge:null},
+  {name:"CHUNKY RETRO SNEAKERS", cat:"kicks", img:"https://picsum.photos/id/103/500/500", bid:110, bids:21, mins:35, badge:"HOT"},
+  {name:"DISTRESSED BUCKET HAT", cat:"acc", img:"https://picsum.photos/id/1060/500/500", bid:19, bids:3, mins:200, badge:null},
+  {name:"PATCHWORK DENIM JACKET", cat:"hoodie", img:"https://picsum.photos/id/1015/500/500", bid:97, bids:17, mins:60, badge:"HOT"},
+  {name:"CROPPED RAW-HEM TEE", cat:"tee", img:"https://picsum.photos/id/1024/500/500", bid:24, bids:4, mins:150, badge:null},
+  {name:"CHAIN CHOKER — RARE", cat:"acc", img:"https://picsum.photos/id/1035/500/500", bid:40, bids:2, mins:300, badge:"RARE"},
+  {name:"BAGGY DENIM JEANS", cat:"bottoms", img:"https://picsum.photos/id/1074/500/500", bid:58, bids:11, mins:90, badge:null},
+];
+
+let products = JSON.parse(JSON.stringify(defaultProducts));
+
+const grid = document.getElementById('grid');
+
+function updateBranding(){
+  document.title = `${brandName} — Streetwear Auction House`;
+  document.querySelectorAll('[data-brand-logo]').forEach(el=>{
+    el.innerHTML = brandName.length > 5
+      ? brandName.slice(0, Math.ceil(brandName.length/2)) + `<span class="accent">${brandName.slice(Math.ceil(brandName.length/2))}</span>`
+      : `<span class="accent">${brandName}</span>`;
+  });
+  document.querySelectorAll('[data-brand-title]').forEach(el=> el.textContent = brandName);
+  document.querySelectorAll('[data-brand-domain]').forEach(el=> el.textContent = brandName + ".COM");
+}
+
+function render(filter){
+  currentFilter = filter;
+  grid.innerHTML = '';
+  products.forEach((p, i) => {
+    if(filter !== 'all' && p.cat !== filter) return;
+    const endTime = Date.now() + p.mins * 60 * 1000;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      ${p.badge ? `<div class="badge ${p.badge==='HOT'?'hot':''}">${p.badge}</div>` : ''}
+      <div class="img-wrap">
+        <img src="${p.img}" alt="${p.name}" loading="lazy" data-img>
+        <button class="photo-edit-btn" data-photo-btn>CHANGE PHOTO</button>
+        <input type="file" accept="image/*" style="display:none" data-photo-input>
+      </div>
+      <h3>${p.name}</h3>
+      <input class="edit-field" data-name-field value="${p.name}" placeholder="Item name">
+      <div class="meta">lot #${(i+1).toString().padStart(3,'0')} · unisex · one of one</div>
+      <div class="bid-row">
+        <div>
+          <div class="label">current bid</div>
+          <div class="amount" data-bid>$${p.bid}</div>
+          <input class="edit-field" type="number" min="1" data-price-field value="${p.bid}" placeholder="Price $">
+        </div>
+        <div class="timer" data-end="${endTime}">--:--:--</div>
+      </div>
+      <button class="bid-btn" data-bid-btn>PLACE BID +$${Math.max(3, Math.round(p.bid*0.08))}</button>
+      <div class="bid-count" data-count>${p.bids} bids so far</div>
+      <button class="delete-lot" data-delete-btn>REMOVE LISTING</button>
+      <div class="stamp-flash">BID<br>LOCKED IN</div>
+    `;
+    grid.appendChild(card);
+
+    // timer
+    const timerEl = card.querySelector('[data-end]');
+    function tick(){
+      const diff = Math.max(0, +timerEl.dataset.end - Date.now());
+      const h = Math.floor(diff/3600000);
+      const m = Math.floor((diff%3600000)/60000);
+      const s = Math.floor((diff%60000)/1000);
+      timerEl.textContent = (diff<=0) ? "SOLD" : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    tick();
+    setInterval(tick, 1000);
+
+    // bid button
+    let currentBid = p.bid;
+    let bidCount = p.bids;
+    const bidBtn = card.querySelector('[data-bid-btn]');
+    const bidAmountEl = card.querySelector('[data-bid]');
+    const priceField = card.querySelector('[data-price-field]');
+    const bidCountEl = card.querySelector('[data-count]');
+    const stampEl = card.querySelector('.stamp-flash');
+    bidBtn.addEventListener('click', () => {
+      const increment = Math.max(3, Math.round(currentBid*0.08));
+      currentBid += increment;
+      bidCount += 1;
+      p.bid = currentBid; p.bids = bidCount;
+      bidAmountEl.textContent = `$${currentBid}`;
+      priceField.value = currentBid;
+      bidCountEl.textContent = `${bidCount} bids so far`;
+      bidBtn.textContent = `PLACE BID +$${Math.max(3, Math.round(currentBid*0.08))}`;
+      stampEl.classList.remove('show');
+      void stampEl.offsetWidth;
+      stampEl.classList.add('show');
+    });
+
+    // edit: name
+    const nameField = card.querySelector('[data-name-field]');
+    nameField.addEventListener('input', () => {
+      p.name = nameField.value;
+      card.querySelector('h3').textContent = nameField.value;
+    });
+
+    // edit: price
+    priceField.addEventListener('input', () => {
+      const val = parseInt(priceField.value || '0', 10);
+      currentBid = val;
+      p.bid = val;
+      bidAmountEl.textContent = `$${val}`;
+      bidBtn.textContent = `PLACE BID +$${Math.max(3, Math.round(val*0.08))}`;
+    });
+
+    // edit: photo via file upload
+    const photoBtn = card.querySelector('[data-photo-btn]');
+    const photoInput = card.querySelector('[data-photo-input]');
+    const imgEl = card.querySelector('[data-img]');
+    photoBtn.addEventListener('click', () => {
+      const url = prompt("Paste an image URL, or click Cancel to upload a file instead:", p.img);
+      if(url){
+        p.img = url; imgEl.src = url;
+      } else {
+        photoInput.click();
+      }
+    });
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => { p.img = ev.target.result; imgEl.src = ev.target.result; };
+      reader.readAsDataURL(file);
+    });
+
+    // delete
+    card.querySelector('[data-delete-btn]').addEventListener('click', () => {
+      if(confirm(`Remove "${p.name}" from the auction?`)){
+        products.splice(products.indexOf(p), 1);
+        render(currentFilter);
+      }
+    });
+  });
+
+  // add-lot tile at end when in edit mode
+  const addTile = document.createElement('div');
+  addTile.className = 'add-lot-card';
+  addTile.textContent = '+ ADD NEW LOT';
+  addTile.addEventListener('click', addNewLot);
+  grid.appendChild(addTile);
+}
+
+function addNewLot(){
+  products.push({
+    name:"NEW LISTING", cat:"tee",
+    img:"https://picsum.photos/id/1039/500/500",
+    bid:20, bids:0, mins:180, badge:null
+  });
+  render(currentFilter);
+}
+
+updateBranding();
+render('all');
+
+// tabs
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('.tape-btn');
+  if(!btn) return;
+  document.querySelectorAll('.tape-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render(btn.dataset.filter);
+});
+
+// edit mode toggle
+const editModeBtn = document.getElementById('editModeBtn');
+const switchEdit = document.getElementById('switchEdit');
+function setEditMode(on){
+  if(on && !adminUnlocked) return; // safety net, buttons are hidden anyway
+  editMode = on;
+  document.body.classList.toggle('edit-mode', on);
+  editModeBtn.textContent = on ? 'EDIT: ON' : 'EDIT: OFF';
+  editModeBtn.classList.toggle('on', on);
+  switchEdit.classList.toggle('on', on);
+}
+editModeBtn.addEventListener('click', () => setEditMode(!editMode));
+switchEdit.addEventListener('click', () => setEditMode(!editMode));
+
+// settings drawer
+const drawer = document.getElementById('drawer');
+const scrim = document.getElementById('scrim');
+function openDrawer(){
+  if(!adminUnlocked) return;
+  drawer.classList.add('open'); scrim.classList.add('show');
+}
+function closeDrawer(){ drawer.classList.remove('open'); scrim.classList.remove('show'); }
+document.getElementById('settingsBtn').addEventListener('click', openDrawer);
+document.getElementById('drawerClose').addEventListener('click', closeDrawer);
+scrim.addEventListener('click', closeDrawer);
+
+// admin lock / unlock
+const adminLockBtn = document.getElementById('adminLockBtn');
+function lockAdmin(){
+  adminUnlocked = false;
+  setEditMode(false);
+  closeDrawer();
+  editModeBtn.style.display = 'none';
+  document.getElementById('settingsBtn').style.display = 'none';
+  adminLockBtn.textContent = '🔒 ADMIN';
+  adminLockBtn.classList.remove('on');
+}
+function unlockAdmin(){
+  const attempt = prompt("Enter admin password to unlock editing:");
+  if(attempt === null) return;
+  if(attempt === ADMIN_PASSWORD){
+    adminUnlocked = true;
+    editModeBtn.style.display = '';
+    document.getElementById('settingsBtn').style.display = '';
+    adminLockBtn.textContent = '🔓 ADMIN';
+    adminLockBtn.classList.add('on');
+  } else {
+    alert("Wrong password — editing stays locked.");
+  }
+}
+adminLockBtn.addEventListener('click', () => {
+  if(adminUnlocked) lockAdmin(); else unlockAdmin();
+});
+document.getElementById('lockNowBtn').addEventListener('click', lockAdmin);
+
+// site name
+document.getElementById('siteNameInput').addEventListener('input', (e) => {
+  brandName = e.target.value.trim().toUpperCase() || "JUNEECOMM";
+  updateBranding();
+});
+
+// ticker toggle
+const tickerWrap = document.getElementById('tickerWrap');
+const switchTicker = document.getElementById('switchTicker');
+switchTicker.addEventListener('click', () => {
+  const on = !switchTicker.classList.contains('on');
+  switchTicker.classList.toggle('on', on);
+  tickerWrap.classList.toggle('off', !on);
+});
+
+// grain toggle
+const grainEl = document.querySelector('.grain');
+const switchGrain = document.getElementById('switchGrain');
+switchGrain.addEventListener('click', () => {
+  const on = !switchGrain.classList.contains('on');
+  switchGrain.classList.toggle('on', on);
+  grainEl.classList.toggle('off', !on);
+});
+
+// scratch toggle
+const scratchEl = document.querySelector('.scratches');
+const switchScratch = document.getElementById('switchScratch');
+switchScratch.addEventListener('click', () => {
+  const on = !switchScratch.classList.contains('on');
+  switchScratch.classList.toggle('on', on);
+  scratchEl.classList.toggle('off', !on);
+});
+
+// add lot from drawer
+document.getElementById('addLotBtn').addEventListener('click', () => {
+  addNewLot();
+  setEditMode(true);
+  closeDrawer();
+});
+
+// reset
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if(confirm("Reset all listings and settings back to default? This can't be undone.")){
+    products = JSON.parse(JSON.stringify(defaultProducts));
+    brandName = "JUNE";
+    document.getElementById('siteNameInput').value = "JUNE";
+    updateBranding();
+    render('all');
+    closeDrawer();
+  }
+});
+</script>
+
+</body>
+</html>
